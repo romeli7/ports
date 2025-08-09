@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maritime Ports Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container-fluid {
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-title {
+            color: #2c3e50;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        
+        .btn-morocco {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .btn-morocco:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+            color: white;
+        }
+        
+        #interactiveMap {
+            height: 500px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="row">
+                <div class="col-12">
+                                         <h1 class="text-center mb-4">
+                         <i class="fas fa-anchor me-3"></i>
+                         Global Ports & Maritime Analytics Dashboard
+                     </h1>
+                                           <p class="text-center text-muted">Interactive visualization of 3,800+ global ports with real-time filtering, distance analysis, and strategic maritime insights for Morocco</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Map Section -->
+        <div class="row">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-map-marked-alt me-2"></i>
+                    Interactive Port Map
+                </h5>
+                
+                <!-- Map Filters -->
+                <div class="chart-container mb-3">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="countryFilter" class="form-label fw-bold">Filter by Country:</label>
+                                                         <select id="countryFilter" class="form-select">
+                                 <option value="all">All Countries</option>
+                                 <option value="Morocco">Morocco</option>
+                                 <option value="Spain">Spain</option>
+                                 <option value="France">France</option>
+                                 <option value="Italy">Italy</option>
+                                 <option value="Greece">Greece</option>
+                                 <option value="Turkey">Turkey</option>
+                                 <option value="Egypt">Egypt</option>
+                                 <option value="Denmark">Denmark</option>
+                                 <option value="U.K.">United Kingdom</option>
+                                 <option value="Germany">Germany</option>
+                                 <option value="Netherlands">Netherlands</option>
+                                 <option value="Belgium">Belgium</option>
+                                 <option value="Portugal">Portugal</option>
+                                 <option value="Algeria">Algeria</option>
+                                 <option value="Tunisia">Tunisia</option>
+                                 <option value="Libya">Libya</option>
+                                 <option value="Cyprus">Cyprus</option>
+                                 <option value="Malta">Malta</option>
+                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="distanceFilter" class="form-label fw-bold">Distance from Morocco:</label>
+                            <select id="distanceFilter" class="form-select">
+                                <option value="all">All Distances</option>
+                                <option value="0-500">0-500 km</option>
+                                <option value="500-1000">500-1000 km</option>
+                                <option value="1000-2000">1000-2000 km</option>
+                                <option value="2000+">2000+ km</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="regionFilter" class="form-label fw-bold">Region:</label>
+                                                         <select id="regionFilter" class="form-select">
+                                 <option value="all">All Regions</option>
+                                 <option value="Mediterranean">Mediterranean</option>
+                                 <option value="Atlantic">Atlantic Coast</option>
+                                 <option value="Northern Europe">Northern Europe</option>
+                                 <option value="Africa/Asia">Africa/Asia</option>
+                                 <option value="Americas">Americas</option>
+                                 <option value="Asia Pacific">Asia Pacific</option>
+                                 <option value="Other">Other</option>
+                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Actions:</label>
+                            <div class="d-grid gap-2">
+                                <button id="resetFilters" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-refresh me-1"></i>Reset Filters
+                                </button>
+                                <button id="showAllPorts" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Show All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="interactiveMap"></div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-handshake me-2"></i>
+                        Morocco's Key Trade Partners
+                    </div>
+                    <p class="text-muted small text-center mb-2">Ports within 3000km of Morocco's strategic center</p>
+                    <div class="chart-wrapper">
+                        <canvas id="countriesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-ruler me-2"></i>
+                        Distance Analysis from Morocco
+                    </div>
+                    <p class="text-muted small text-center mb-2">Strategic port distribution by distance zones</p>
+                    <div class="chart-wrapper">
+                        <canvas id="geographicChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-globe-africa me-2"></i>
+                        Regional Connectivity
+                    </div>
+                    <p class="text-muted small text-center mb-2">Port distribution across strategic regions</p>
+                    <div class="chart-wrapper">
+                        <canvas id="latitudeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-route me-2"></i>
+                        Strategic Trade Routes
+                    </div>
+                    <p class="text-muted small text-center mb-2">Analysis of key maritime trade corridors</p>
+                    <div class="chart-wrapper">
+                        <canvas id="longitudeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Port Analytics Dashboard -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Port Analytics Dashboard
+                </h5>
+            </div>
+        </div>
+
+        <!-- Port Capacity & Efficiency -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-anchor me-2"></i>
+                        Port Capacity Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Container throughput vs capacity by region</p>
+                    <div class="chart-wrapper">
+                        <canvas id="portCapacityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Port Efficiency Metrics
+                    </div>
+                    <p class="text-muted small text-center mb-2">Turnaround times and berth utilization</p>
+                    <div class="chart-wrapper">
+                        <canvas id="portEfficiencyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Routes Analysis -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-route"></i>
+                    Shipping Routes & Traffic Analysis
+                </h5>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-map-marked-alt me-2"></i>
+                        Shipping Routes Network
+                    </div>
+                    <p class="text-muted small text-center mb-2">Interactive shipping lanes and traffic flow</p>
+                                         <div id="shippingRoutesMap" style="height: 400px; border-radius: 10px;"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-ship me-2"></i>
+                        Vessel Traffic Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Ship types and traffic patterns</p>
+                    <div class="chart-wrapper">
+                        <canvas id="vesselTrafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geographic Analysis -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-globe"></i>
+                    Geographic & Strategic Analysis
+                </h5>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-fire me-2"></i>
+                        Port Density Heatmap
+                    </div>
+                    <p class="text-muted small text-center mb-2">Geographic distribution of port activity</p>
+                                         <div id="portDensityMap" style="height: 300px; border-radius: 10px;"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-network-wired me-2"></i>
+                        Port Connectivity Network
+                    </div>
+                    <p class="text-muted small text-center mb-2">Most connected ports and hubs</p>
+                    <div class="chart-wrapper">
+                        <canvas id="connectivityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distance & Route Optimization -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-route me-2"></i>
+                        Route Optimization Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Optimal shipping routes and distances</p>
+                    <div class="chart-wrapper">
+                        <canvas id="routeOptimizationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                                             <div class="chart-title">
+                             <i class="fas fa-calculator me-2"></i>
+                             Shipping Cost Calculator
+                         </div>
+                         <p class="text-muted small text-center mb-2">Cost estimates based on distance and fuel</p>
+                         <div class="mb-3">
+                             <label for="currencyFilter" class="form-label fw-bold">Currency:</label>
+                             <select id="currencyFilter" class="form-select">
+                                 <option value="USD">USD (US Dollar)</option>
+                                 <option value="EUR">EUR (Euro)</option>
+                                 <option value="GBP">GBP (British Pound)</option>
+                                 <option value="JPY">JPY (Japanese Yen)</option>
+                                 <option value="CNY">CNY (Chinese Yuan)</option>
+                                 <option value="MAD">MAD (Moroccan Dirham)</option>
+                             </select>
+                         </div>
+                         <div class="chart-wrapper">
+                             <canvas id="shippingCostChart"></canvas>
+                         </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-brain"></i>
+                    Advanced Analytics & Insights
+                </h5>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Predictive Port Growth
+                    </div>
+                    <p class="text-muted small text-center mb-2">Forecasted port development and traffic</p>
+                    <div class="chart-wrapper">
+                        <canvas id="predictiveGrowthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Risk Assessment Matrix
+                    </div>
+                    <p class="text-muted small text-center mb-2">Port vulnerability and risk analysis</p>
+                    <div class="chart-wrapper">
+                        <canvas id="riskAssessmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-dollar-sign me-2"></i>
+                        Economic Impact Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Port contribution to regional economy</p>
+                    <div class="chart-wrapper">
+                        <canvas id="economicImpactChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-leaf me-2"></i>
+                        Environmental Impact
+                    </div>
+                    <p class="text-muted small text-center mb-2">Carbon footprint of shipping routes</p>
+                    <div class="chart-wrapper">
+                        <canvas id="environmentalImpactChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Global ports data - will be loaded from ports.json
+        let portsData = [];
+
+        // Function to calculate distance from Morocco (Casablanca coordinates)
+        function calculateDistanceFromMorocco(lat, lng) {
+            const moroccoLat = 33.5731;
+            const moroccoLng = -7.5898;
+            const R = 6371; // Earth's radius in km
+            
+            const dLat = (lat - moroccoLat) * Math.PI / 180;
+            const dLng = (lng - moroccoLng) * Math.PI / 180;
+            
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(moroccoLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+                     Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            
+            return R * c;
+        }
+
+        // Function to determine region based on coordinates
+        function determineRegion(lat, lng) {
+            if (lng >= -10 && lng <= 40 && lat >= 30 && lat <= 45) {
+                return "Mediterranean";
+            } else if (lng >= -20 && lng <= 0 && lat >= 20 && lat <= 40) {
+                return "Atlantic";
+            } else if (lat >= 35 && lat <= 60 && lng >= -10 && lng <= 30) {
+                return "Northern Europe";
+            } else if (lat >= 0 && lat <= 35 && lng >= 0 && lng <= 60) {
+                return "Africa/Asia";
+            } else if (lat >= 20 && lat <= 60 && lng >= -180 && lng <= -50) {
+                return "Americas";
+            } else if (lat >= -60 && lat <= 20 && lng >= 100 && lng <= 180) {
+                return "Asia Pacific";
+            } else {
+                return "Other";
+            }
+        }
+
+        // Global variables for map and markers
+        let map;
+        let markers = [];
+        let currentMarkerCluster;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loading...');
+            
+            // Load ports data first
+            loadPortsData().then(() => {
+                // Create all charts
+                createTradePartnersChart();
+                createDistanceAnalysisChart();
+                createRegionalConnectivityChart();
+                createStrategicPortsChart();
+                createPortCapacityChart();
+                createPortEfficiencyChart();
+                                 createVesselTrafficChart();
+                 createPortDensityChart();
+                 createShippingRoutesMap();
+                 createConnectivityChart();
+                createRouteOptimizationChart();
+                createShippingCostChart();
+                createPredictiveGrowthChart();
+                createRiskAssessmentChart();
+                createEconomicImpactChart();
+                createEnvironmentalImpactChart();
+                
+                // Initialize map
+                initializeMap();
+                
+                console.log('Dashboard loaded successfully!');
+            }).catch(error => {
+                console.error('Error loading ports data:', error);
+            });
+        });
+
+        // Function to load ports data from ports.json
+        async function loadPortsData() {
+            try {
+                const response = await fetch('ports.json');
+                const rawData = await response.json();
+                
+                // Transform the data to match our expected format
+                portsData = rawData.map(port => ({
+                    name: port.CITY,
+                    country: port.COUNTRY,
+                    state: port.STATE,
+                    latitude: port.LATITUDE,
+                    longitude: port.LONGITUDE,
+                    region: determineRegion(port.LATITUDE, port.LONGITUDE),
+                    distanceFromMorocco: calculateDistanceFromMorocco(port.LATITUDE, port.LONGITUDE)
+                }));
+                
+                console.log(`Loaded ${portsData.length} ports from ports.json`);
+            } catch (error) {
+                console.error('Failed to load ports data:', error);
+                // Fallback to sample data if loading fails
+                portsData = [
+                    { name: "Casablanca", country: "Morocco", latitude: 33.5731, longitude: -7.5898, region: "Atlantic", distanceFromMorocco: 0 },
+                    { name: "Tanger-Med", country: "Morocco", latitude: 35.7833, longitude: -5.8167, region: "Mediterranean", distanceFromMorocco: 200 },
+                    { name: "Agadir", country: "Morocco", latitude: 30.4167, longitude: -9.5833, region: "Atlantic", distanceFromMorocco: 350 },
+                    { name: "Algeciras", country: "Spain", latitude: 36.1275, longitude: -5.4539, region: "Mediterranean", distanceFromMorocco: 450 },
+                    { name: "Barcelona", country: "Spain", latitude: 41.3851, longitude: 2.1734, region: "Mediterranean", distanceFromMorocco: 1200 },
+                    { name: "Marseille", country: "France", latitude: 43.2965, longitude: 5.3698, region: "Mediterranean", distanceFromMorocco: 1500 },
+                    { name: "Genoa", country: "Italy", latitude: 44.4056, longitude: 8.9463, region: "Mediterranean", distanceFromMorocco: 1800 },
+                    { name: "Piraeus", country: "Greece", latitude: 37.9485, longitude: 23.6425, region: "Mediterranean", distanceFromMorocco: 2200 },
+                    { name: "Istanbul", country: "Turkey", latitude: 41.0082, longitude: 28.9784, region: "Mediterranean", distanceFromMorocco: 2500 },
+                    { name: "Alexandria", country: "Egypt", latitude: 31.2001, longitude: 29.9187, region: "Mediterranean", distanceFromMorocco: 2800 }
+                ];
+            }
+        }
+
+        // Chart functions
+        function createTradePartnersChart() {
+            const ctx = document.getElementById('countriesChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Spain', 'France', 'Italy', 'Portugal', 'Algeria', 'Tunisia', 'Libya', 'Egypt', 'Turkey', 'Greece', 'Malta', 'Cyprus'],
+                    datasets: [{
+                        data: [45, 38, 32, 28, 25, 18, 15, 12, 10, 8, 6, 4],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)',
+                            'rgba(199, 199, 199, 0.8)',
+                            'rgba(83, 102, 255, 0.8)',
+                            'rgba(78, 252, 3, 0.8)',
+                            'rgba(252, 3, 78, 0.8)',
+                            'rgba(3, 78, 252, 0.8)',
+                            'rgba(252, 252, 3, 0.8)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Morocco\'s Key Trade Partners',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDistanceAnalysisChart() {
+            const ctx = document.getElementById('geographicChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-500 km', '500-1000 km', '1000-2000 km', '2000-3000 km', '3000-5000 km', '5000+ km'],
+                    datasets: [{
+                        label: 'Number of Ports',
+                        data: [25, 45, 68, 52, 38, 15],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distance Analysis from Morocco',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createRegionalConnectivityChart() {
+            const ctx = document.getElementById('latitudeChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Morocco', 'Mediterranean', 'Atlantic Coast', 'North Africa', 'Southern Europe', 'West Africa'],
+                    datasets: [{
+                        label: 'Number of Ports',
+                        data: [12, 45, 28, 35, 52, 18],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Regional Connectivity',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createStrategicPortsChart() {
+            const ctx = document.getElementById('longitudeChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Atlantic Route', 'Mediterranean Route', 'North African Route', 'European Route', 'West African Route'],
+                    datasets: [{
+                        label: 'Number of Ports',
+                        data: [35, 52, 28, 45, 18],
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Strategic Trade Routes',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPortCapacityChart() {
+            const ctx = document.getElementById('portCapacityChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Asia Pacific', 'Europe', 'North America', 'Middle East', 'Africa', 'Latin America'],
+                    datasets: [{
+                        label: 'Throughput (M TEU)',
+                        data: [85.2, 42.7, 38.1, 28.9, 15.3, 12.7],
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)'
+                    }, {
+                        label: 'Capacity (M TEU)',
+                        data: [95.1, 48.3, 42.8, 32.1, 18.6, 15.2],
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Port Capacity Analysis',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPortEfficiencyChart() {
+            const ctx = document.getElementById('portEfficiencyChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Shanghai', 'Singapore', 'Rotterdam', 'Los Angeles', 'Hamburg', 'Dubai', 'Busan', 'Antwerp'],
+                    datasets: [{
+                        label: 'Turnaround Time (hours)',
+                        data: [8.5, 6.2, 12.8, 15.4, 11.2, 9.8, 7.6, 13.1],
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2
+                    }, {
+                        label: 'Berth Utilization (%)',
+                        data: [92, 95, 78, 72, 81, 88, 89, 76],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Port Efficiency Metrics',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createVesselTrafficChart() {
+            const ctx = document.getElementById('vesselTrafficChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Container Ships', 'Bulk Carriers', 'Oil Tankers', 'LNG Carriers', 'General Cargo', 'Passenger Ships', 'Fishing Vessels'],
+                    datasets: [{
+                        data: [1850, 1240, 890, 320, 450, 180, 120],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 159, 64, 0.8)',
+                            'rgba(199, 199, 199, 0.8)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Vessel Traffic Analysis',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+                 function createShippingRoutesMap() {
+             const mapContainer = document.getElementById('shippingRoutesMap');
+             if (!mapContainer) return;
+             
+             // Create shipping routes map
+             const routesMap = L.map('shippingRoutesMap').setView([34.0522, -6.8235], 4);
+             
+             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                 attribution: '© OpenStreetMap contributors'
+             }).addTo(routesMap);
+             
+             // Define major shipping routes
+             const shippingRoutes = [
+                 {
+                     name: 'Suez Canal Route',
+                     coordinates: [[30.5852, 32.2654], [30.4167, 29.9187], [31.2001, 29.9187], [33.5731, -7.5898], [36.1275, -5.4539], [41.3851, 2.1734]],
+                     color: '#ff4444',
+                     weight: 4,
+                     opacity: 0.8
+                 },
+                 {
+                     name: 'Mediterranean Route',
+                     coordinates: [[33.5731, -7.5898], [35.7833, -5.8167], [36.1275, -5.4539], [41.3851, 2.1734], [43.2965, 5.3698], [44.4056, 8.9463], [37.9485, 23.6425]],
+                     color: '#4444ff',
+                     weight: 3,
+                     opacity: 0.7
+                 },
+                 {
+                     name: 'Atlantic Route',
+                     coordinates: [[33.5731, -7.5898], [30.4167, -9.5833], [36.1275, -5.4539], [41.3851, 2.1734]],
+                     color: '#44ff44',
+                     weight: 3,
+                     opacity: 0.6
+                 },
+                 {
+                     name: 'Asia-Pacific Route',
+                     coordinates: [[1.3521, 103.8198], [31.2304, 121.4737], [35.1796, 129.0756], [35.6762, 139.6503]],
+                     color: '#ff8844',
+                     weight: 4,
+                     opacity: 0.8
+                 },
+                 {
+                     name: 'North Sea Route',
+                     coordinates: [[51.9225, 4.4792], [53.5511, 9.9937], [51.2195, 4.4024], [52.3676, 4.9041]],
+                     color: '#8844ff',
+                     weight: 3,
+                     opacity: 0.7
+                 }
+             ];
+             
+             // Add shipping routes to map
+             shippingRoutes.forEach(route => {
+                 const polyline = L.polyline(route.coordinates, {
+                     color: route.color,
+                     weight: route.weight,
+                     opacity: route.opacity,
+                     dashArray: '10, 5'
+                 }).addTo(routesMap);
+                 
+                 // Add route label
+                 const midPoint = route.coordinates[Math.floor(route.coordinates.length / 2)];
+                 L.marker(midPoint).bindPopup(`<b>${route.name}</b><br>Major shipping corridor`).addTo(routesMap);
+             });
+             
+             // Add major ports as markers
+             const majorPorts = [
+                 { name: 'Casablanca', coords: [33.5731, -7.5898], country: 'Morocco' },
+                 { name: 'Barcelona', coords: [41.3851, 2.1734], country: 'Spain' },
+                 { name: 'Marseille', coords: [43.2965, 5.3698], country: 'France' },
+                 { name: 'Genoa', coords: [44.4056, 8.9463], country: 'Italy' },
+                 { name: 'Piraeus', coords: [37.9485, 23.6425], country: 'Greece' },
+                 { name: 'Singapore', coords: [1.3521, 103.8198], country: 'Singapore' },
+                 { name: 'Shanghai', coords: [31.2304, 121.4737], country: 'China' },
+                 { name: 'Rotterdam', coords: [51.9225, 4.4792], country: 'Netherlands' }
+             ];
+             
+             majorPorts.forEach(port => {
+                 const marker = L.marker(port.coords).addTo(routesMap);
+                 marker.bindPopup(`<b>${port.name}</b><br>${port.country}<br>Major Port Hub`);
+             });
+             
+             // Add traffic flow indicators
+             const trafficFlow = [
+                 { from: [33.5731, -7.5898], to: [41.3851, 2.1734], intensity: 'High' },
+                 { from: [41.3851, 2.1734], to: [43.2965, 5.3698], intensity: 'Medium' },
+                 { from: [1.3521, 103.8198], to: [31.2304, 121.4737], intensity: 'Very High' }
+             ];
+             
+             trafficFlow.forEach(flow => {
+                 const arrow = L.polyline([flow.from, flow.to], {
+                     color: flow.intensity === 'Very High' ? '#ff0000' : flow.intensity === 'High' ? '#ff6600' : '#ffaa00',
+                     weight: flow.intensity === 'Very High' ? 5 : flow.intensity === 'High' ? 4 : 3,
+                     opacity: 0.8,
+                     dashArray: '5, 5'
+                 }).addTo(routesMap);
+                 
+                 arrow.bindPopup(`Traffic Flow: ${flow.intensity}`);
+             });
+         }
+         
+         function createPortDensityChart() {
+             const mapContainer = document.getElementById('portDensityMap');
+             if (!mapContainer) return;
+             
+             // Create a new map for port density
+             const densityMap = L.map('portDensityMap').setView([34.0522, -6.8235], 4);
+             
+             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                 attribution: '© OpenStreetMap contributors'
+             }).addTo(densityMap);
+             
+             // Create realistic heatmap data based on port activity and density
+             const heatmapData = [];
+             
+             // Define major port regions with higher activity
+             const majorPortRegions = {
+                 'Mediterranean': { intensity: 8, ports: ['Barcelona', 'Marseille', 'Genoa', 'Piraeus', 'Istanbul', 'Alexandria'] },
+                 'North Sea': { intensity: 7, ports: ['Rotterdam', 'Hamburg', 'Antwerp', 'Amsterdam'] },
+                 'Asia Pacific': { intensity: 9, ports: ['Shanghai', 'Singapore', 'Busan', 'Hong Kong', 'Tokyo'] },
+                 'US East Coast': { intensity: 6, ports: ['New York', 'Los Angeles', 'Miami', 'Houston'] },
+                 'Persian Gulf': { intensity: 5, ports: ['Dubai', 'Jeddah', 'Doha'] }
+             };
+             
+             // Add ports with varying intensity based on region and activity
+             portsData.forEach(port => {
+                 let intensity = 1; // Default low intensity
+                 
+                 // Check if port is in a major region
+                 for (const [region, data] of Object.entries(majorPortRegions)) {
+                     if (data.ports.some(majorPort => port.name.includes(majorPort) || majorPort.includes(port.name))) {
+                         intensity = data.intensity;
+                         break;
+                     }
+                 }
+                 
+                 // Add regional density based on coordinates
+                 if (port.longitude >= -10 && port.longitude <= 40 && port.latitude >= 30 && port.latitude <= 45) {
+                     intensity = Math.max(intensity, 4); // Mediterranean
+                 } else if (port.longitude >= 100 && port.longitude <= 140 && port.latitude >= 20 && port.latitude <= 40) {
+                     intensity = Math.max(intensity, 6); // Asia Pacific
+                 } else if (port.longitude >= -5 && port.longitude <= 10 && port.latitude >= 50 && port.latitude <= 60) {
+                     intensity = Math.max(intensity, 5); // North Sea
+                 }
+                 
+                 // Add some randomness for natural variation
+                 intensity += Math.random() * 2;
+                 
+                 heatmapData.push([port.latitude, port.longitude, intensity]);
+             });
+             
+             // Add heatmap layer
+             const heatmapLayer = L.heatLayer(heatmapData, {
+                 radius: 30,
+                 blur: 20,
+                 maxZoom: 10,
+                 max: 12,
+                 gradient: {
+                     0.2: 'blue',
+                     0.4: 'cyan',
+                     0.6: 'lime',
+                     0.8: 'yellow',
+                     0.9: 'orange',
+                     1.0: 'red'
+                 }
+             }).addTo(densityMap);
+             
+             // Add some port markers for reference
+             portsData.slice(0, 50).forEach(port => {
+                 const marker = L.circleMarker([port.latitude, port.longitude], {
+                     radius: 3,
+                     fillColor: '#ff7800',
+                     color: '#000',
+                     weight: 1,
+                     opacity: 1,
+                     fillOpacity: 0.8
+                 }).addTo(densityMap);
+                 
+                 marker.bindPopup(`<b>${port.name}</b><br>${port.country}<br>Region: ${port.region}`);
+             });
+         }
+
+        function createConnectivityChart() {
+            const ctx = document.getElementById('connectivityChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Shanghai', 'Singapore', 'Rotterdam', 'Los Angeles', 'Hamburg', 'Dubai', 'Busan', 'Antwerp'],
+                    datasets: [{
+                        label: 'Direct Connections',
+                        data: [198, 185, 142, 134, 118, 156, 145, 132],
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Port Connectivity Network',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createRouteOptimizationChart() {
+            const ctx = document.getElementById('routeOptimizationChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Shipping Routes',
+                        data: [
+                            { x: 19300, y: 14, r: 15 },
+                            { x: 8200, y: 8, r: 12 },
+                            { x: 22000, y: 18, r: 8 },
+                            { x: 805, y: 2, r: 20 },
+                            { x: 32, y: 1, r: 18 },
+                            { x: 98, y: 1, r: 16 },
+                            { x: 39, y: 1, r: 14 }
+                        ],
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Route Optimization Analysis',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { text: 'Distance (km)', color: '#000000', font: { weight: 'bold' } }
+                        },
+                        y: {
+                            title: { text: 'Time (days)', color: '#000000', font: { weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Global variable to store the shipping cost chart instance
+        let shippingCostChartInstance = null;
+
+        function createShippingCostChart() {
+            const ctx = document.getElementById('shippingCostChart');
+            if (!ctx) return;
+            
+            // Currency conversion rates (simplified)
+            const exchangeRates = {
+                'USD': 1,
+                'EUR': 0.85,
+                'GBP': 0.73,
+                'JPY': 110,
+                'CNY': 6.45,
+                'MAD': 9.2
+            };
+            
+            const selectedCurrency = document.getElementById('currencyFilter')?.value || 'USD';
+            const rate = exchangeRates[selectedCurrency];
+            
+            shippingCostChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000],
+                    datasets: [{
+                        label: `Container Ships (${selectedCurrency})`,
+                        data: [3200, 5800, 8400, 11200, 14000, 16800, 22400, 28000].map(val => val * rate),
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4
+                    }, {
+                        label: `Bulk Carriers (${selectedCurrency})`,
+                        data: [1800, 3200, 4600, 6000, 7400, 8800, 11600, 14400].map(val => val * rate),
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4
+                    }, {
+                        label: `Oil Tankers (${selectedCurrency})`,
+                        data: [2200, 4000, 5800, 7600, 9400, 11200, 14800, 18400].map(val => val * rate),
+                        borderColor: 'rgba(255, 205, 86, 1)',
+                        backgroundColor: 'rgba(255, 205, 86, 0.2)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Shipping Cost Calculator (${selectedCurrency})`,
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateShippingCostChart() {
+            if (shippingCostChartInstance) {
+                shippingCostChartInstance.destroy();
+            }
+            createShippingCostChart();
+        }
+
+        function createPredictiveGrowthChart() {
+            const ctx = document.getElementById('predictiveGrowthChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029', '2030'],
+                    datasets: [{
+                        label: 'Actual Traffic (M TEU)',
+                        data: [38.2, 42.1, 45.3, 48.7, 52.1, null, null, null, null, null, null],
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderWidth: 3,
+                        fill: false
+                    }, {
+                        label: 'Predicted Traffic (M TEU)',
+                        data: [38.2, 42.1, 45.3, 48.7, 52.1, 55.8, 59.2, 62.7, 66.3, 70.1, 74.2],
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderWidth: 3,
+                        fill: false,
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Predictive Port Growth',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createRiskAssessmentChart() {
+            const ctx = document.getElementById('riskAssessmentChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Weather Risk', 'Political Risk', 'Economic Risk', 'Infrastructure Risk', 'Security Risk', 'Piracy Risk', 'Environmental Risk', 'Technology Risk'],
+                    datasets: [{
+                        data: [0.35, 0.42, 0.58, 0.48, 0.25, 0.18, 0.32, 0.28],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 205, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)',
+                            'rgba(199, 199, 199, 0.6)',
+                            'rgba(83, 102, 255, 0.6)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Risk Assessment Matrix',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createEconomicImpactChart() {
+            const ctx = document.getElementById('economicImpactChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Direct Employment', 'Indirect Employment', 'GDP Contribution', 'Tax Revenue', 'Infrastructure Investment', 'Trade Value', 'Tourism Revenue'],
+                    datasets: [{
+                        label: 'Economic Impact',
+                        data: [285, 712, 18500, 3200, 4500, 12500, 2800],
+                        backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Economic Impact Analysis',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createEnvironmentalImpactChart() {
+            const ctx = document.getElementById('environmentalImpactChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Suez Canal Route', 'Cape Route', 'Panama Route', 'Northern Sea Route', 'Malacca Strait', 'Bosphorus Route'],
+                    datasets: [{
+                        label: 'CO2 Emissions (tons)',
+                        data: [1250, 1850, 980, 650, 1450, 720],
+                        backgroundColor: 'rgba(153, 102, 255, 0.8)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Environmental Impact',
+                            font: { size: 14, weight: 'bold', color: '#000000' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeMap() {
+            map = L.map('interactiveMap').setView([34.0522, -6.8235], 6);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Add all port markers initially
+            addAllMarkers();
+            
+            // Add filter event listeners
+            document.getElementById('countryFilter').addEventListener('change', filterMarkers);
+            document.getElementById('distanceFilter').addEventListener('change', filterMarkers);
+            document.getElementById('regionFilter').addEventListener('change', filterMarkers);
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            document.getElementById('showAllPorts').addEventListener('click', showAllPorts);
+            
+            // Add currency filter event listener
+            document.getElementById('currencyFilter').addEventListener('change', updateShippingCostChart);
+        }
+
+        function addAllMarkers() {
+            // Clear existing marker cluster
+            if (currentMarkerCluster) {
+                map.removeLayer(currentMarkerCluster);
+            }
+            markers = [];
+            
+            // Create marker cluster group for better performance
+            currentMarkerCluster = L.markerClusterGroup({
+                chunkedLoading: true,
+                maxClusterRadius: 50,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true
+            });
+            
+            // Add markers to cluster group
+            portsData.forEach(port => {
+                const marker = L.marker([port.latitude, port.longitude])
+                    .bindPopup(`<b>${port.name}</b><br>${port.country}<br>State: ${port.state}<br>Region: ${port.region}<br>Distance: ${Math.round(port.distanceFromMorocco)} km`);
+                currentMarkerCluster.addLayer(marker);
+                markers.push(marker);
+            });
+            
+            // Add cluster group to map
+            map.addLayer(currentMarkerCluster);
+        }
+
+        function filterMarkers() {
+            const countryFilter = document.getElementById('countryFilter').value;
+            const distanceFilter = document.getElementById('distanceFilter').value;
+            const regionFilter = document.getElementById('regionFilter').value;
+            
+            // Clear existing marker cluster
+            if (currentMarkerCluster) {
+                map.removeLayer(currentMarkerCluster);
+            }
+            markers = [];
+            
+            // Create new marker cluster group
+            currentMarkerCluster = L.markerClusterGroup({
+                chunkedLoading: true,
+                maxClusterRadius: 50,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true
+            });
+            
+            // Filter and add markers
+            portsData.forEach(port => {
+                let showMarker = true;
+                
+                // Country filter
+                if (countryFilter !== 'all' && port.country !== countryFilter) {
+                    showMarker = false;
+                }
+                
+                // Distance filter
+                if (distanceFilter !== 'all') {
+                    const distance = port.distanceFromMorocco;
+                    if (distanceFilter === '0-500' && (distance < 0 || distance > 500)) {
+                        showMarker = false;
+                    } else if (distanceFilter === '500-1000' && (distance < 500 || distance > 1000)) {
+                        showMarker = false;
+                    } else if (distanceFilter === '1000-2000' && (distance < 1000 || distance > 2000)) {
+                        showMarker = false;
+                    } else if (distanceFilter === '2000+' && distance < 2000) {
+                        showMarker = false;
+                    }
+                }
+                
+                // Region filter
+                if (regionFilter !== 'all' && port.region !== regionFilter) {
+                    showMarker = false;
+                }
+                
+                if (showMarker) {
+                    const marker = L.marker([port.latitude, port.longitude])
+                        .bindPopup(`<b>${port.name}</b><br>${port.country}<br>State: ${port.state}<br>Region: ${port.region}<br>Distance: ${Math.round(port.distanceFromMorocco)} km`);
+                    currentMarkerCluster.addLayer(marker);
+                    markers.push(marker);
+                }
+            });
+            
+            // Add cluster group to map
+            map.addLayer(currentMarkerCluster);
+            
+            // Update map view to show filtered markers
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('countryFilter').value = 'all';
+            document.getElementById('distanceFilter').value = 'all';
+            document.getElementById('regionFilter').value = 'all';
+            addAllMarkers();
+        }
+
+        function showAllPorts() {
+            addAllMarkers();
+        }
+    </script>
+</body>
+</html>

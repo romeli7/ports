@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morocco Maritime Analytics Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+        }
+        
+        .stats-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 350px;
+            position: relative;
+        }
+        
+        .map-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #interactiveMap {
+            height: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .filters-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-morocco {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-morocco:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        .section-title {
+            color: #495057;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .chart-wrapper {
+            height: 280px;
+            position: relative;
+        }
+
+        .data-sources-container {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-source-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-source-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-source-item i {
+            width: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="text-white mb-0">
+                        <i class="fas fa-anchor me-3"></i>
+                        Morocco Maritime Analytics Dashboard
+                    </h1>
+                    <p class="text-white-50 mb-0">Strategic port analysis and trade route visualization</p>
+                </div>
+                                 <div class="col-md-4 text-end">
+                     <button class="btn btn-morocco me-2" onclick="exportData()">
+                         <i class="fas fa-download me-2"></i>Export Data
+                     </button>
+                     <button class="btn btn-outline-light" onclick="toggleRoutePlanning()">
+                         <i class="fas fa-route me-2"></i>Route Planning
+                     </button>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid py-4">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="totalPorts">Loading...</div>
+                    <div class="stats-label">Ports Worldwide</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="moroccanPorts">Loading...</div>
+                    <div class="stats-label">Moroccan Ports</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="mediterraneanPorts">Loading...</div>
+                    <div class="stats-label">Mediterranean</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="atlanticPorts">Loading...</div>
+                    <div class="stats-label">Atlantic Coast</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="tradePartners">Loading...</div>
+                    <div class="stats-label">Trade Partners</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card text-center">
+                    <div class="stats-number" id="avgDistance">Loading...</div>
+                    <div class="stats-label">Avg Distance (km)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <h5 class="section-title">
+                <i class="fas fa-filter"></i>
+                Data Filters
+            </h5>
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="filter-group">
+                        <label class="filter-label">Continent</label>
+                        <select id="continentFilter" class="form-select">
+                            <option value="">All Continents</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-group">
+                        <label class="filter-label">Country</label>
+                        <select id="countryFilter" class="form-select">
+                            <option value="">All Countries</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-group">
+                        <label class="filter-label">Region/State</label>
+                        <select id="regionFilter" class="form-select">
+                            <option value="">All Regions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">Distance from Morocco</label>
+                        <select id="distanceFilter" class="form-select">
+                            <option value="">All Distances</option>
+                            <option value="500">Within 500 km</option>
+                            <option value="1000">Within 1000 km</option>
+                            <option value="2000">Within 2000 km</option>
+                            <option value="5000">Within 5000 km</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label class="filter-label">&nbsp;</label>
+                        <button class="btn btn-morocco w-100" onclick="resetFilters()">
+                            <i class="fas fa-refresh me-2"></i>Reset Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Map -->
+        <div class="map-container">
+            <h5 class="section-title">
+                <i class="fas fa-map-marked-alt"></i>
+                Interactive Port Map
+            </h5>
+            <div id="interactiveMap"></div>
+        </div>
+
+
+
+        <!-- Charts Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-handshake me-2"></i>
+                        Morocco's Key Trade Partners
+                    </div>
+                    <p class="text-muted small text-center mb-2">Ports within 3000km of Morocco's strategic center</p>
+                    <div class="chart-wrapper">
+                        <canvas id="countriesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-ruler me-2"></i>
+                        Distance Analysis from Morocco
+                    </div>
+                    <p class="text-muted small text-center mb-2">Strategic port distribution by distance zones</p>
+                    <div class="chart-wrapper">
+                        <canvas id="geographicChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-globe-africa me-2"></i>
+                        Regional Connectivity
+                    </div>
+                    <p class="text-muted small text-center mb-2">Port distribution across strategic regions</p>
+                    <div class="chart-wrapper">
+                        <canvas id="latitudeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-route me-2"></i>
+                        Strategic Trade Routes
+                    </div>
+                    <p class="text-muted small text-center mb-2">Analysis of key maritime trade corridors</p>
+                    <div class="chart-wrapper">
+                        <canvas id="longitudeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Port Analytics Dashboard -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Port Analytics Dashboard
+                </h5>
+            </div>
+        </div>
+
+        <!-- Port Capacity & Efficiency -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-anchor me-2"></i>
+                        Port Capacity Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Container throughput vs capacity by region</p>
+                    <div class="chart-wrapper">
+                        <canvas id="portCapacityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Port Efficiency Metrics
+                    </div>
+                    <p class="text-muted small text-center mb-2">Turnaround times and berth utilization</p>
+                    <div class="chart-wrapper">
+                        <canvas id="portEfficiencyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Routes Analysis -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-route"></i>
+                    Shipping Routes & Traffic Analysis
+                </h5>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-map-marked-alt me-2"></i>
+                        Shipping Routes Network
+                    </div>
+                    <p class="text-muted small text-center mb-2">Interactive shipping lanes and traffic flow</p>
+                    <div id="shippingRoutesMap" style="height: 400px;"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-ship me-2"></i>
+                        Vessel Traffic Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Ship types and traffic patterns</p>
+                    <div class="chart-wrapper">
+                        <canvas id="vesselTrafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geographic Analysis -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-globe"></i>
+                    Geographic & Strategic Analysis
+                </h5>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-fire me-2"></i>
+                        Port Density Heatmap
+                    </div>
+                    <p class="text-muted small text-center mb-2">Geographic distribution of port activity</p>
+                    <div class="chart-wrapper">
+                        <canvas id="portDensityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-network-wired me-2"></i>
+                        Port Connectivity Network
+                    </div>
+                    <p class="text-muted small text-center mb-2">Most connected ports and hubs</p>
+                    <div class="chart-wrapper">
+                        <canvas id="connectivityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distance & Route Optimization -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-route me-2"></i>
+                        Route Optimization Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Optimal shipping routes and distances</p>
+                    <div class="chart-wrapper">
+                        <canvas id="routeOptimizationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-calculator me-2"></i>
+                        Shipping Cost Calculator
+                    </div>
+                    <p class="text-muted small text-center mb-2">Cost estimates based on distance and fuel</p>
+                    <div class="chart-wrapper">
+                        <canvas id="shippingCostChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Tools -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-tools"></i>
+                    Interactive Analysis Tools
+                </h5>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-search me-2"></i>
+                        Port Search & Filter
+                    </div>
+                    <div class="p-3">
+                        <input type="text" id="portSearch" class="form-control mb-2" placeholder="Search ports...">
+                        <select id="regionFilter" class="form-select mb-2">
+                            <option value="">All Regions</option>
+                            <option value="europe">Europe</option>
+                            <option value="africa">Africa</option>
+                            <option value="asia">Asia</option>
+                            <option value="americas">Americas</option>
+                        </select>
+                        <button class="btn btn-morocco w-100" onclick="searchPorts()">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-balance-scale me-2"></i>
+                        Port Comparison Tool
+                    </div>
+                    <div class="p-3">
+                        <select id="port1Select" class="form-select mb-2">
+                            <option value="">Select Port 1</option>
+                        </select>
+                        <select id="port2Select" class="form-select mb-2">
+                            <option value="">Select Port 2</option>
+                        </select>
+                        <button class="btn btn-morocco w-100" onclick="comparePorts()">
+                            <i class="fas fa-balance-scale me-2"></i>Compare
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-download me-2"></i>
+                        Data Export
+                    </div>
+                    <div class="p-3">
+                        <button class="btn btn-morocco w-100 mb-2" onclick="exportPortData()">
+                            <i class="fas fa-download me-2"></i>Export Port Data
+                        </button>
+                        <button class="btn btn-morocco w-100" onclick="exportCharts()">
+                            <i class="fas fa-chart-bar me-2"></i>Export Charts
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-brain"></i>
+                    Advanced Analytics & Insights
+                    </h5>
+            </div>
+        </div>
+
+                    <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Predictive Port Growth
+                    </div>
+                    <p class="text-muted small text-center mb-2">Forecasted port development and traffic</p>
+                    <div class="chart-wrapper">
+                        <canvas id="predictiveGrowthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Risk Assessment Matrix
+                    </div>
+                    <p class="text-muted small text-center mb-2">Port vulnerability and risk analysis</p>
+                    <div class="chart-wrapper">
+                        <canvas id="riskAssessmentChart"></canvas>
+                            </div>
+                        </div>
+                            </div>
+                        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-dollar-sign me-2"></i>
+                        Economic Impact Analysis
+                    </div>
+                    <p class="text-muted small text-center mb-2">Port contribution to regional economy</p>
+                    <div class="chart-wrapper">
+                        <canvas id="economicImpactChart"></canvas>
+                    </div>
+                            </div>
+                        </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-leaf me-2"></i>
+                        Environmental Impact
+                    </div>
+                    <p class="text-muted small text-center mb-2">Carbon footprint of shipping routes</p>
+                    <div class="chart-wrapper">
+                        <canvas id="environmentalImpactChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+        </div>
+
+        <!-- Real-time Data Integration -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h5 class="section-title">
+                    <i class="fas fa-satellite"></i>
+                    Real-time Data Integration
+                </h5>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-cloud-sun me-2"></i>
+                        Port Weather Conditions
+                    </div>
+                    <p class="text-muted small text-center mb-2">Real-time weather data for major ports</p>
+                    <div class="chart-wrapper">
+                        <canvas id="weatherConditionsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-ship me-2"></i>
+                        AIS Ship Tracking
+                    </div>
+                    <p class="text-muted small text-center mb-2">Real-time vessel positions</p>
+                    <div class="chart-wrapper">
+                        <canvas id="aisTrackingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Port Status Updates
+                    </div>
+                    <p class="text-muted small text-center mb-2">Real-time congestion and availability</p>
+                    <div class="chart-wrapper">
+                        <canvas id="portStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html> 
